@@ -3,9 +3,11 @@ using System.Data.Common;
 using System.Linq;
 using Articulate.Models;
 using Articulate.Repositories;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +24,7 @@ using Steeltoe.Management.Endpoint;
 using Steeltoe.Management.Endpoint.Env;
 using Steeltoe.Management.Hypermedia;
 using Steeltoe.Management.Tracing;
+using Steeltoe.Security.Authentication.CloudFoundry;
 
 namespace Articulate
 {
@@ -67,6 +70,26 @@ namespace Articulate
             
             services.AddDiscoveryClient(Configuration);
             // return services.BuildServiceProvider(false);
+
+            services.AddOptions();
+
+            services.AddAuthentication((options) =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = CloudFoundryDefaults.AuthenticationScheme;
+
+            })
+            .AddCookie((options) =>
+            {
+                options.AccessDeniedPath = new PathString("/Home/AccessDenied");
+            })
+            .AddCloudFoundryOAuth(Configuration);
+
+            //services.AddAuthorization(options =>
+            //{
+            //    options.AddPolicy("testgroup", policy => policy.RequireClaim("scope", "testgroup"));
+            //    options.AddPolicy("testgroup1", policy => policy.RequireClaim("scope", "testgroup1"));
+            //});
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -77,6 +100,15 @@ namespace Articulate
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedProto
+            });
+
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseFileServer();
             app.UseEnvActuator();
@@ -89,7 +121,7 @@ namespace Articulate
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
             app.EnsureMigrationOfContext<AttendeeContext>();
-            
+
             app.UseDiscoveryClient();
         }
         
