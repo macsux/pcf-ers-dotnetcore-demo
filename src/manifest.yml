@@ -1,0 +1,12 @@
+﻿---
+applications:
+- name: pcf-ers-dotnetcore-demo
+  buildpacks:
+  - dotnet_core_buildpack
+  stack: cflinuxfs3
+  memory: 512M
+  services:
+  - pcf-ers-dotnetcore-demo
+  env:
+    SSO_IDENTITY_PROVIDERS: uaa,auth0,azure-pivotal
+    SSO_REDIRECT_URIS: https://pcf-ers-dotnetcore-demo.cfapps.io/signin-cloudfoundry
