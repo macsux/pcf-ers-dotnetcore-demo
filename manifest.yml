@@ -4,7 +4,7 @@ applications:
   memory: 768M
   instances: 1
   random-route: true
-  path: src\bin\Debug\netcoreapp3.1\publish\
+  path: src/bin/Debug/netcoreapp3.1/publish/
   services: []
   env:
     SKIP_SSL_VALIDATION: "true"
